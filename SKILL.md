@@ -1,6 +1,6 @@
 ---
 name: wechat-paper-digest
-description: Use when the user wants to turn a research paper PDF, DOI, or paper link into WeChat-publication-ready Chinese content, including a short cover title, translated title, translated abstract, condensed research background, and 3 figure/table-backed core results.
+description: Use when the user wants to turn a research paper PDF, DOI, or paper link into WeChat-publication-ready Chinese content, including a short cover title, translated title, translated abstract, expanded research background, and 3 figure/table-backed core results.
 ---
 
 # WeChat Paper Digest
@@ -13,7 +13,7 @@ This skill produces a fixed output package for a single paper:
 - cover title
 - translated paper title
 - translated abstract
-- 200-300 character research background
+- 500-700 character research background
 - 3 core results, each tied to a specific figure or table
 
 ## When To Use
@@ -129,13 +129,17 @@ Translate the abstract into Chinese with these constraints:
 
 ### 4. 研究背景
 
-Write a 200-300 Chinese-character background section based on the paper introduction.
+Write a 500-700 Chinese-character background section based on the paper introduction.
 
 Requirements:
-- this is a compressed rewrite of the introduction, not a general-pop summary
-- explain the field problem, why it matters, and what gap or challenge motivated the study
+- this is an expanded rewrite of the introduction for a WeChat article, not a general-pop summary
+- use 2-3 natural paragraphs rather than a single dense paragraph
+- explain the field problem and why it matters in practical, clinical, scientific, or application terms
+- summarize the key prior progress, dominant methods, or known mechanisms that the introduction uses to frame the paper
+- identify the unresolved gap, bottleneck, controversy, or technical challenge that motivated the study
+- end by explaining what question or objective the paper set out to address, without previewing detailed results
 - do not drift into detailed result reporting
-- do not exceed 300 Chinese characters
+- do not exceed 700 Chinese characters
 
 ### 5. 结果要点
 
@@ -240,7 +244,8 @@ Before finishing, verify all of the following:
 - the affiliation is translated into Chinese
 - the cover title is 30 characters or fewer
 - the abstract translation uses the explicit subject only once
-- the research background is 200-300 Chinese characters
+- the research background is 500-700 Chinese characters
+- the research background uses 2-3 natural paragraphs and covers problem, prior context, gap, and study motivation
 - there are exactly 3 result bullets
 - each result bullet has a 6-9 Chinese-character title
 - each result bullet is approximately 250 Chinese characters
