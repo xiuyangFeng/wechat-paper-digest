@@ -1,6 +1,6 @@
 ---
 name: wechat-paper-digest
-description: Use when the user wants to turn a research paper PDF, DOI, or paper link into WeChat-publication-ready Chinese content, including a short cover title, translated title, translated abstract, expanded research background, and 3 figure/table-backed core results.
+description: Use when the user wants to turn a research paper PDF, DOI, or paper link into WeChat-publication-ready Chinese content, including downloading the paper, recording processed articles, and producing a short cover title, translated title, translated abstract, expanded research background, and 3 figure/table-backed core results.
 ---
 
 # WeChat Paper Digest
@@ -10,6 +10,9 @@ description: Use when the user wants to turn a research paper PDF, DOI, or paper
 Use this skill when the user gives you a paper PDF, DOI, or paper URL and wants公众号内容素材 rather than a generic paper summary.
 
 This skill produces a fixed output package for a single paper:
+- downloaded PDF when the input is a DOI or paper link and a PDF is available
+- extracted text file for local reading/search when PDF text extraction works
+- processed-article registry update to avoid duplicate future work
 - cover title
 - translated paper title
 - translated abstract
@@ -44,17 +47,76 @@ If the user provides a PDF file:
 
 If the user provides a DOI, DOI URL, publisher URL, arXiv URL, or other paper link:
 - resolve the paper first
-- obtain the paper text or PDF where possible
+- obtain and save the paper PDF where possible
+- extract and save searchable text from the PDF where possible
 - read the paper before generating output
+
+## Local File And Registry Workflow
+
+Before drafting, maintain a local paper package in the current working directory unless the user gives a different target folder.
+
+### 1. Duplicate check
+
+Before downloading or drafting:
+- If `processed_articles.md` exists, search it for the DOI, arXiv ID, source URL, PDF filename, and normalized title keywords.
+- If the paper is already marked `已完成`, tell the user which local material exists and do not regenerate unless they explicitly ask to redo it.
+- If it is only `待确认`, `已处理-历史记录`, or missing a generated Markdown path, continue processing and update the row after completion.
+
+### 2. Download and text extraction
+
+For DOI or paper-link input:
+- Save the PDF in the working directory using a stable identifier:
+  - arXiv: `paper_<arxiv-id>.pdf`, for example `paper_2501.09046.pdf`
+  - DOI: `paper_<doi-suffix-or-safe-title>.pdf`
+  - publisher URL without DOI: `paper_<safe-short-title>.pdf`
+- Extract text beside the PDF as `paper_<same-id>.txt` when possible.
+- Prefer `pdftotext -layout <pdf> <txt>` for arXiv and other text PDFs; if unavailable or extraction is poor, use another reliable PDF text workflow and note the limitation.
+- Do not draft from the abstract page alone when the PDF can be downloaded and read.
+
+For PDF input:
+- Keep or copy the PDF in the working directory only when needed for a stable local package; otherwise use the provided path.
+- Still create a text extraction file next to the PDF when practical, because later figure/table searches depend on it.
+
+### 3. Output file naming
+
+When writing files, save the final公众号素材 as a Markdown file in the working directory:
+- arXiv: `<short-topic>_<arxiv-id>_公众号素材.md`
+- DOI/publisher paper: `<short-topic>_<safe-doi-or-title>_公众号素材.md`
+
+Use short ASCII names where possible for the machine-readable identifier portion. Chinese is acceptable for the human-readable topic portion if it helps the user identify the paper.
+
+### 4. Processed article registry
+
+After generating the Markdown, create or update `processed_articles.md` in the working directory.
+
+The registry should include:
+- status
+- de-duplication key, preferably `doi:<doi>; arxiv:<id>` when both exist
+- English paper title
+- source link
+- local PDF/TXT/Markdown material paths
+- processing date
+- first author and first-author affiliation when known
+- notes for missing DOI, poor text extraction, or incomplete historical metadata
+
+Use this table shape when creating a new registry:
+
+```markdown
+| 状态 | 去重主键 | 论文标题 | 来源链接 | 本地材料 | 处理日期 | 备注 |
+|---|---|---|---|---|---|---|
+```
+
+Use `已完成` only after the PDF/TXT, generated Markdown, and registry row have all been verified. Use `待确认` or `已处理-历史记录` when evidence is incomplete.
 
 ## Required Reading Process
 
 Before generating the公众号内容, do all of the following:
 
-1. Identify the paper title, authors, first author, first-author affiliation, abstract, introduction, conclusion, figures, and tables.
-2. Confirm the first author's affiliation and translate the affiliation into Chinese.
-3. Confirm the DOI if present.
-4. Read enough of the paper to understand:
+1. Complete the duplicate check, download/text extraction, and local file setup described above.
+2. Identify the paper title, authors, first author, first-author affiliation, abstract, introduction, conclusion, figures, and tables.
+3. Confirm the first author's affiliation and translate the affiliation into Chinese.
+4. Confirm the DOI if present.
+5. Read enough of the paper to understand:
    - the research problem
    - the core method or intervention
    - the main findings
@@ -84,11 +146,11 @@ Always return content in exactly this structure:
 
 # 结果要点
 1. ...
-   标题：...
+   图/表标题：...
 2. ...
-   标题：...
+   图/表标题：...
 3. ...
-   标题：...
+   图/表标题：...
 
 # 结论与意义
 ...
@@ -156,7 +218,12 @@ Each result bullet must:
 - explain why this result matters for the paper's main claim or application value
 - translate the original figure caption, table title, or figure/table label into Chinese when citing it
 - include that translated caption or title inline so the user can map the Chinese explanation back to the paper artifact
-- present the translated figure/table caption or title as a separate lead-in line when possible
+- present the translated figure/table caption or title as a separate lead-in line before the explanatory paragraph
+- if one result bullet cites more than one artifact, provide a separate Chinese title for every cited artifact
+- format multiple artifact titles explicitly, for example:
+  - `图6标题：患者特异数据集中 CFD 真值与代表模型推断的 vFFR 图`
+  - `表7标题：患者特异数据集中各模型对狭窄区域 vFFR 的诊断性能`
+- do not collapse multiple cited artifacts into one generic title; a paragraph that mentions both `图6` and `表7` must include both `图6标题` and `表7标题`
 - do not count the translated figure/table caption or title toward the approximately 250 Chinese characters of the result explanation itself
 - be suitable for the user to locate and screenshot manually
 
@@ -239,6 +306,11 @@ Avoid:
 ## Execution Checklist
 
 Before finishing, verify all of the following:
+- duplicate check was performed against `processed_articles.md` when it exists
+- DOI/link inputs have a downloaded PDF saved locally when available
+- a searchable TXT extraction exists locally, or a clear extraction limitation is reported
+- the final公众号素材 Markdown was saved in the working directory
+- `processed_articles.md` was created or updated with the DOI/arXiv/source key and local PDF/TXT/Markdown paths
 - the paper has actually been read, not just skimmed
 - the first author and first-author affiliation are correct
 - the affiliation is translated into Chinese
@@ -250,7 +322,8 @@ Before finishing, verify all of the following:
 - each result bullet has a 6-9 Chinese-character title
 - each result bullet is approximately 250 Chinese characters
 - every result bullet points to a specific figure or table
-- every cited figure or table includes its original caption or title translated into Chinese
+- every cited figure or table includes its own original caption or title translated into Chinese
+- when a result bullet cites multiple figures/tables, every cited artifact has a separate `图X标题` or `表X标题` line
 - the translated figure/table caption or title is separated from the main result explanation and not counted toward the result word target
 - the conclusion-and-significance section exists and is approximately 200 Chinese characters
 - the DOI link is returned, or the missing-DOI fallback is shown

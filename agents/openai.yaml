@@ -1,4 +1,4 @@
 interface:
   display_name: "WeChat Paper Digest"
-  short_description: "将单篇论文整理成公众号推文封面与正文所需的固定素材包"
-  default_prompt: "Use $wechat-paper-digest to read a paper PDF, DOI, or paper link and produce WeChat-ready Chinese content."
+  short_description: "下载单篇论文并整理成公众号素材包，同时登记已处理文章"
+  default_prompt: "Use $wechat-paper-digest to download/read a paper PDF, DOI, or paper link, produce WeChat-ready Chinese content, and update the processed-article registry."
